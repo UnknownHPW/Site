@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Cavaco</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #09090b 0%, #18181b 100%);
+            --card-bg: #121216;
+            --card-border: #27272a;
+            --text-main: #f4f4f5;
+            --text-label: #a1a1aa;
+            --input-bg: #18181b;
+            --input-border: #27272a;
+            --input-text: #ffffff;
+            --btn-bg: #7c3aed;
+            --btn-hover: #6d28d9;
+            --result-bg: #18181b;
+            --switch-bg: #7c3aed; /* Cor roxinha do switch no modo escuro */
+        }
+
+        [data-theme="light"] {
+            --bg-gradient: linear-gradient(135deg, #f4f7f6 0%, #e2e8f0 100%);
+            --card-bg: white;
+            --card-border: #cbd5e1;
+            --text-main: #1e293b;
+            --text-label: #475569;
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --input-text: #000000;
+            --btn-bg: #2563eb;
+            --btn-hover: #1d4ed8;
+            --result-bg: #f8fafc;
+            --switch-bg: #0fbcf9; /* Cor azul do switch no modo claro */
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-gradient); 
+            margin: 0; 
+            padding: 40px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        
+        .card { 
+            background: var(--card-bg); 
+            padding: 35px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15); 
+            border: 1px solid var(--card-border);
+            width: 100%; 
+            max-width: 400px; 
+            position: relative;
+            transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        /* --- ESTILOS DO SWITCH --- */
+        .theme-switch-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 28px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--switch-bg); /* Usa a cor dinâmica (roxo no escuro, azul no claro) */
+            transition: 0.4s;
+            border-radius: 28px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        /* Ícone da Lua (quando o switch está desativado / modo escuro) */
+        .slider:after {
+            content: "🌙";
+            position: absolute;
+            right: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            opacity: 1;
+            transition: 0.4s;
+        }
+
+        /* Quando o input estiver ativado (Modo Claro) */
+        input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+
+        /* Ícone do Sol (quando ativado / modo claro) */
+        input:checked + .slider:after {
+            content: "☀️";
+            left: 7px;
+            right: auto;
+        }
+        /* --------------------------------------------- */
+
+        h2 { 
+            color: var(--text-main); 
+            text-align: center; 
+            margin-top: 10px;
+            font-size: 24px;
+        }
+        
+        label { 
+            display: block; 
+            margin-top: 15px; 
+            font-weight: 600; 
+            color: var(--text-label); 
+            font-size: 14px;
+        }
+        
+        input[type="text"], input[type="number"] { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 6px; 
+            background: var(--input-bg);
+            border: 1px solid var(--input-border); 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 15px;
+            color: var(--input-text);
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+        }
+        
+        button.calc-btn { 
+            background-color: var(--btn-bg); 
+            color: white; 
+            border: none; 
+            padding: 14px; 
+            width: 100%; 
+            border-radius: 6px; 
+            margin-top: 24px; 
+            font-size: 16px; 
+            font-weight: 600;
+            cursor: pointer; 
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        button.calc-btn:hover { 
+            background-color: var(--btn-hover); 
+        }
+        
+        button.calc-btn:active {
+            transform: scale(0.98);
+        }
+        
+        #resultado { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: var(--result-bg); 
+            border: 1px solid var(--card-border);
+            border-radius: 6px; 
+            text-align: center; 
+            font-weight: 600; 
+            display: none; 
+            color: var(--text-main);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- Switch de Tema -->
+        <div class="theme-switch-container">
+            <label class="theme-switch">
+                <input type="checkbox" id="theme-toggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <h2>Calculadora de Cavaco</h2>
+        
+        <label for="operador">Operador:</label>
+        <input type="text" id="operador" placeholder="Seu nome">
+
+        <label for="valorTon">Valor por Tonelada (R$):</label>
+        <input type="number" id="valorTon" placeholder="0.00" step="0.01">
+
+        <label for="umidBase">Umidade Base (%):</label>
+        <input type="number" id="umidBase" placeholder="0.0" step="0.1">
+
+        <label for="umidEntregue">Umidade Entregue (%):</label>
+        <input type="number" id="umidEntregue" placeholder="0.0" step="0.1">
+
+        <button class="calc-btn" onclick="enviarCalculo()">Calcular</button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const savedTheme = localStorage.getItem('theme');
+
+        if (savedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            themeToggle.checked = true;
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggle.checked = false;
+        }
+
+        function toggleTheme(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        themeToggle.addEventListener('change', toggleTheme);
+
+        async function enviarCalculo() {
+            const btn = document.querySelector('.calc-btn');
+            const dados = {
+                operador: document.getElementById('operador').value,
+                valorTon: parseFloat(document.getElementById('valorTon').value) || 0,
+                umidBase: parseFloat(document.getElementById('umidBase').value) || 0,
+                umidEntregue: parseFloat(document.getElementById('umidEntregue').value) || 0
+            };
+
+            try {
+                btn.innerText = "Calculando...";
+                btn.disabled = true;
+
+                const resposta = await fetch('https://site-94ws.onrender.com/calcular', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                const resultadoJson = await resposta.json();
+                
+                const divResultado = document.getElementById('resultado');
+                divResultado.style.display = 'block';
+                divResultado.innerHTML = `Operador: ${resultadoJson.operador}<br>Preço Final: R$ ${resultadoJson.precoFinal.toFixed(2)}`;
+            } catch (erro) {
+                alert('Erro ao conectar com o servidor da API!');
+                console.error(erro);
+            } finally {
+                btn.innerText = "Calcular";
+                btn.disabled = false;
+            }
+        }
+    </script>
+
+</body>
+</html>
