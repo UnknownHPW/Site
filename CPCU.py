@@ -1,15 +1,49 @@
-import datetime
 import os
+import json
+import datetime
 import gspread
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-# --- CONFIGURAÇÕES DO SISTEMA ---
-SENHA_ADMIN = "777"
+app = FastAPI()
 
-# 1. CONEXÃO COM AS ABAS DO GOOGLE SHEETS
+# Permite que o site HTML converse com a API sem bloqueios de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- MODELO DE DADOS RECEBIDOS DO SITE ---
+class CalculoRequest(BaseModel):
+    operador: str
+    valorTon: float
+    umidBase: float
+    umidEntregue: float
+
+# --- CONEXÃO COM O GOOGLE SHEETS VIA VARIÁVEIS DE AMBIENTE ---
 def conectar_google_sheets():
     try:
-        caminho_credenciais = os.path.join(os.path.dirname(__file__), "credentials.json")
-        gc = gspread.service_account(filename=caminho_credenciais)
+        # Se estiver na nuvem (Render), pega das variáveis de ambiente.
+        # Se estiver testando no PC, você pode criar um dicionário fixo temporariamente se preferir.
+        private_key_env = os.environ.get("GOOGLE_PRIVATE_KEY")
+        client_email_env = os.environ.get("GOOGLE_CLIENT_EMAIL")
+
+        if private_key_env and client_email_env:
+            google_creds = {
+                "type": "service_account",
+                "private_key": private_key_env.replace("\\n", "\n"),
+                "client_email": client_email_env,
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+            gc = gspread.service_account_from_dict(google_creds)
+        else:
+            # Fallback para o arquivo local se estiver testando no seu computador
+            caminho_credenciais = os.path.join(os.path.dirname(__file__), "credentials.json")
+            gc = gspread.service_account(filename=caminho_credenciais)
         
         planilha = gc.open("Logs Calculadora Cavaco")
         
@@ -20,96 +54,12 @@ def conectar_google_sheets():
             aba_logs = planilha.add_worksheet(title="Logs", rows="500", cols="20")
             aba_logs.append_row(["Data/Hora", "Operador", "Valor p/ Tonelada", "Umidade Base", "Umidade Entregue", "Preço Final p/ Tonelada"])
 
-        # Aba de Usuários
-        try:
-            aba_usuarios = planilha.worksheet("Usuarios")
-        except gspread.WorksheetNotFound:
-            aba_usuarios = planilha.add_worksheet(title="Usuarios", rows="100", cols="20")
-            aba_usuarios.append_row(["PIN", "Nome"])
-            # Usuário padrão
-            #aba_usuarios.append_row(["101", "Operador Padrao"])
-
-        return aba_logs, aba_usuarios
+        return aba_logs
     except Exception as e:
         print(f"\nErro ao conectar com o Google Sheets: {e}")
-        return None, None
+        return None
 
-# 2. CADASTRAR NOVO USUÁRIO (PROTEGIDO POR SENHA ADMIN)
-def cadastrar_novo_usuario(aba_usuarios):
-    print("\n" + "="*40)
-    print("       PAINEL DE ADMINISTRAÇÃO")
-    print("="*40)
-    
-    # Validação da Senha Admin
-    senha_digitada = input("Digite a Senha do Administrador: ").strip()
-    if senha_digitada != SENHA_ADMIN:
-        print("Senha de Administrador incorreta! Acesso negado.\n")
-        return
-
-    print("\n--- CADASTRO DE NOVO OPERADOR ---")
-    
-    # Valida PIN (não aceita vazio)
-    while True:
-        novo_pin = input("Digite o novo PIN (ex: 102): ").strip()
-        if not novo_pin:
-            print("O PIN não pode ficar em branco!")
-            continue
-            
-        # Verifica se PIN já existe
-        registros = aba_usuarios.get_all_records()
-        pin_existente = any(str(r.get("PIN")) == novo_pin for r in registros)
-        
-        if pin_existente:
-            print("Este PIN já está cadastrado para outro usuário! Escolha outro.")
-        else:
-            break
-
-    # Valida Nome (não aceita vazio)
-    while True:
-        novo_nome = input("Digite o nome do operador: ").strip()
-        if not novo_nome:
-            print("O nome não pode ficar em branco!")
-        else:
-            break
-
-    # Salva no Google Sheets
-    aba_usuarios.append_row([novo_pin, novo_nome])
-    print(f"\nOperador '{novo_nome}' com PIN '{novo_pin}' cadastrado com sucesso na nuvem!\n")
-
-# 3. TELA DE LOGIN
-def fazer_login(aba_usuarios):
-    while True:
-        print("=" * 45)
-        print("      CALCULADORA DE CAVACO - LOGIN")
-        print("=" * 45)
-        print(" [ Digite seu PIN para entrar ]")
-        print(" [ Digite 'admin' para cadastrar novo usuário ]")
-        print("-" * 45)
-
-        entrada = input("PIN ou Comando: ").strip()
-
-        # Validação de campo vazio no Login
-        if not entrada:
-            print("Por favor, digite um PIN válido.\n")
-            continue
-
-        # Atalho para o painel de admin
-        if entrada.lower() == "admin":
-            cadastrar_novo_usuario(aba_usuarios)
-            continue
-
-        # Consulta os usuários no Google Sheets
-        registros = aba_usuarios.get_all_records()
-        usuarios = {str(r["PIN"]): str(r["Nome"]) for r in registros}
-
-        if entrada in usuarios:
-            nome_operador = usuarios[entrada]
-            print(f"\nBem-vindo(a), {nome_operador}!\n")
-            return nome_operador
-        else:
-            print("PIN não encontrado ou incorreto. Tente novamente.\n")
-
-# 4. LÓGICA DE CÁLCULO
+# --- LÓGICA DE CÁLCULO ---
 def calcular_preco_ajustado(valor_ton, umidade_base, umidade_entregue):
     porcentagem_agua_base = umidade_base / 100.0
     porcentagem_agua_entregue = umidade_entregue / 100.0
@@ -122,7 +72,7 @@ def calcular_preco_ajustado(valor_ton, umidade_base, umidade_entregue):
         
     return valor_ton * (massa_seca_entregue / massa_seca_base)
 
-# 5. REGISTRO DO LOG
+# --- REGISTRO DO LOG ---
 def registrar_log(aba_logs, usuario, valor_ton, umid_base, umid_entregue, preco_pago):
     data_hora = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     nova_linha = [
@@ -134,38 +84,28 @@ def registrar_log(aba_logs, usuario, valor_ton, umid_base, umid_entregue, preco_
         f"R$ {preco_pago:.2f}"
     ]
     aba_logs.append_row(nova_linha)
-    print("\nCálculo salvo com sucesso no Google Sheets!")
 
-# --- EXECUÇÃO PRINCIPAL ---
+# --- ROTA DA API PARA O SITE ---
+@app.post("/calcular")
+def calcular(dados: CalculoRequest):
+    aba_logs = conectar_google_sheets()
+    if not aba_logs:
+        raise HTTPException(status_code=500, detail="Erro ao conectar com o Google Sheets.")
+
+    # Executa o cálculo
+    preco_final = calcular_preco_ajustado(dados.valorTon, dados.umidBase, dados.umidEntregue)
+
+    # Salva na planilha do Google
+    registrar_log(aba_logs, dados.operador, dados.valorTon, dados.umidBase, dados.umidEntregue, preco_final)
+
+    # Retorna o resultado para o JavaScript do site
+    return {
+        "operador": dados.operador,
+        "precoFinal": preco_final
+    }
+
+# --- INICIALIZAÇÃO PARA SUPORTE À NUVEM E LOCAL ---
 if __name__ == "__main__":
-    aba_logs, aba_usuarios = conectar_google_sheets()
-
-    if aba_logs and aba_usuarios:
-        operador = fazer_login(aba_usuarios)
-
-        while True:
-            print("-" * 45)
-            print("          NOVO CÁLCULO DE CAVACO")
-            print("-" * 45)
-
-            try:
-                valor_ton = float(input("Valor por Tonelada (R$): "))
-                umidade_base = float(input("Umidade Base (%): "))
-                umidade_entregue = float(input("Umidade Entregue (%): "))
-
-                preco_final = calcular_preco_ajustado(valor_ton, umidade_base, umidade_entregue)
-
-                print("\n" + "=" * 45)
-                print(f" OPERADOR: {operador}")
-                print(f" PREÇO A SER PAGO: R$ {preco_final:.2f} / Ton")
-                print("=" * 45)
-
-                registrar_log(aba_logs, operador, valor_ton, umidade_base, umidade_entregue, preco_final)
-
-            except ValueError:
-                print("\nDigite apenas números válidos.")
-
-            continuar = input("\nDeseja fazer outro cálculo? (s/n): ").strip().lower()
-            if continuar != 's':
-                print(f"\nAté mais, {operador}!")
-                break
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
