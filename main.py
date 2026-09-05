@@ -1,6 +1,5 @@
 import os
 import datetime
-import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -17,24 +16,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configuração de Conexão com o Google Sheets usando Variáveis de Ambiente do Render
+# Configuração de Conexão com o Google Sheets usando apenas as 3 variáveis do Render
 def conectar_google_sheets():
     try:
+        private_key = os.getenv("GOOGLE_PRIVATE_KEY")
+        if private_key:
+            private_key = private_key.replace("\\n", "\n")
+
         credentials_dict = {
             "type": "service_account",
-            "project_id": os.getenv("GOOGLE_PROJECT_ID"),
-            "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
-            "private_key": os.getenv("GOOGLE_PRIVATE_KEY").replace("\\n", "\n"),
             "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
-            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-            "auth_uri": "https://accounts.google.com/oauth2/v3/auth",
+            "private_key": private_key,
             "token_uri": "https://oauth2.googleapis.com/token",
-            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-            "client_x509_cert_url": os.getenv("GOOGLE_CERT_URL")
         }
         
         gc = gspread.service_account_from_dict(credentials_dict)
-        planilha = gc.open(os.getenv("GOOGLE_SHEET_NAME", "Logs Calculadora Cavaco"))
+        sheet_name = os.getenv("GOOGLE_SHEET_NAME", "Logs Calculadora Cavaco")
+        planilha = gc.open(sheet_name)
         
         try:
             aba_logs = planilha.worksheet("Logs")
