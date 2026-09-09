@@ -17,7 +17,7 @@
             --btn-bg: #7c3aed;
             --btn-hover: #6d28d9;
             --result-bg: #18181b;
-            --switch-bg: #7c3aed;
+            --switch-bg: #7c3aed; /* Cor roxinha do switch no modo escuro */
         }
 
         [data-theme="light"] {
@@ -32,7 +32,7 @@
             --btn-bg: #2563eb;
             --btn-hover: #1d4ed8;
             --result-bg: #f8fafc;
-            --switch-bg: #0fbcf9;
+            --switch-bg: #0fbcf9; /* Cor azul do switch no modo claro */
         }
 
         body { 
@@ -64,6 +64,7 @@
             transform: translateY(-3px);
         }
 
+        /* --- ESTILOS DO SWITCH --- */
         .theme-switch-container {
             position: absolute;
             top: 20px;
@@ -87,7 +88,7 @@
             position: absolute;
             cursor: pointer;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--switch-bg);
+            background-color: var(--switch-bg); /* Usa a cor dinâmica (roxo no escuro, azul no claro) */
             transition: 0.4s;
             border-radius: 28px;
         }
@@ -105,6 +106,7 @@
             z-index: 2;
         }
 
+        /* Ícone da Lua (quando o switch está desativado / modo escuro) */
         .slider:after {
             content: "🌙";
             position: absolute;
@@ -116,15 +118,18 @@
             transition: 0.4s;
         }
 
+        /* Quando o input estiver ativado (Modo Claro) */
         input:checked + .slider:before {
             transform: translateX(28px);
         }
 
+        /* Ícone do Sol (quando ativado / modo claro) */
         input:checked + .slider:after {
             content: "☀️";
             left: 7px;
             right: auto;
         }
+        /* --------------------------------------------- */
 
         h2 { 
             color: var(--text-main); 
@@ -204,6 +209,7 @@
 <body>
 
     <div class="card">
+        <!-- Switch de Tema -->
         <div class="theme-switch-container">
             <label class="theme-switch">
                 <input type="checkbox" id="theme-toggle">
@@ -256,30 +262,53 @@
 
         async function enviarCalculo() {
             const btn = document.querySelector('.calc-btn');
+            
+            const operador = document.getElementById('operador').value || "Web User";
+            const valorTon = parseFloat(document.getElementById('valorTon').value) || 0;
+            const umidBase = parseFloat(document.getElementById('umidBase').value) || 0;
+            const umidEntregue = parseFloat(document.getElementById('umidEntregue').value) || 0;
+
+            // Faz o cálculo da umidade do cavaco direto no JS
+            const porcentagemAguaBase = umidBase / 100.0;
+            const porcentagemAguaEntregue = umidEntregue / 100.0;
+            
+            const massaSecaBase = 1.0 - porcentagemAguaBase;
+            const massaSecaEntregue = 1.0 - porcentagemAguaEntregue;
+            
+            let precoFinal = 0.0;
+            if (massaSecaBase !== 0) {
+                precoFinal = valorTon * (massaSecaEntregue / massaSecaBase);
+            }
+            const precoFinalArredondado = Math.round(precoFinal * 100) / 100;
+
+            // Formata igualzinho a planilha espera
             const dados = {
-                operador: document.getElementById('operador').value,
-                valorTon: parseFloat(document.getElementById('valorTon').value) || 0,
-                umidBase: parseFloat(document.getElementById('umidBase').value) || 0,
-                umidEntregue: parseFloat(document.getElementById('umidEntregue').value) || 0
+                operador: operador,
+                valorTon: `R$ ${valorTon.toFixed(2)}`,
+                umidBase: `${umidBase.toFixed(2)}%`,
+                umidEntregue: `${umidEntregue.toFixed(2)}%`,
+                precoFinal: `R$ ${precoFinalArredondado.toFixed(2)}`
             };
 
             try {
-                btn.innerText = "Calculando...";
+                btn.innerText = "Salvando...";
                 btn.disabled = true;
 
-                const resposta = await fetch('https://site-94ws.onrender.com/calcular', {
+                // COLE AQUI A SUA URL DO GOOGLE APPS SCRIPT (terminada em /exec)
+                const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbz717pcAGv8W1VAvHg--Xkh7_sUPrViivf2yUrT3GdTVuOVJQiZWiCTYwV6S0-Tu9H-/exec";
+
+                await fetch(URL_GOOGLE_SCRIPT, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dados)
                 });
 
-                const resultadoJson = await resposta.json();
-                
                 const divResultado = document.getElementById('resultado');
                 divResultado.style.display = 'block';
-                divResultado.innerHTML = `Operador: ${resultadoJson.operador}<br>Preço Final: R$ ${resultadoJson.precoFinal.toFixed(2)}`;
+                divResultado.innerHTML = `Operador: ${operador}<br>Preço Final: R$ ${precoFinalArredondado.toFixed(2)}`;
             } catch (erro) {
-                alert('Erro ao conectar com o servidor da API!');
+                alert('Erro ao enviar para a planilha!');
                 console.error(erro);
             } finally {
                 btn.innerText = "Calcular";
