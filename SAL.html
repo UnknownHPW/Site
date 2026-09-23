@@ -256,6 +256,11 @@
                 <input type="number" id="umidadeDesejada" step="0.01" placeholder="Ex: 12.01">
             </div>
 
+            <div>
+                <label for="oleoDesejado">Digite o óleo desejado (%):</label>
+                <input type="number" id="oleoDesejado" step="0.01" placeholder="Ex: 20.82">
+            </div>
+
             <button type="button" class="calc-btn" onclick="calcularOleo()">Calcular Ajuste</button>
 
             <div id="resultado"></div>
@@ -269,24 +274,38 @@
             const umidadeOriginal = 12.01;
             const oleoOriginal = 20.82;
             
-            const inputDesejada = document.getElementById('umidadeDesejada').value;
-            const umidadeDesejada = parseFloat(inputDesejada);
-            
+            const inputUmidade = document.getElementById('umidadeDesejada').value;
+            const umidadeDesejada = parseFloat(inputUmidade);
+
+            const inputOleo = document.getElementById('oleoDesejado').value;
+            const oleoDesejado = parseFloat(inputOleo);
+
             const divResultado = document.getElementById('resultado');
 
-            if (isNaN(umidadeDesejada)) {
+            if (isNaN(umidadeDesejada) || isNaN(oleoDesejado) || umidadeDesejada < 0 || oleoDesejado < 0) {
                 divResultado.style.display = 'block';
-                divResultado.innerHTML = "Por favor, insira um valor válido para a umidade.";
+                divResultado.innerHTML = "Por favor, preencha todos os campos corretamente.";
                 return;
             }
 
-            const resultado = oleoOriginal * ((100 - umidadeDesejada) / (100 - umidadeOriginal));
-            const resultadoArredondado = resultado.toFixed(2);
+            const oleoCorrigido = oleoOriginal * ((100 - umidadeDesejada) / (100 - umidadeOriginal));
+            const diferenca = oleoCorrigido - oleoDesejado;
 
             divResultado.style.display = 'block';
-            divResultado.innerHTML = `Ref: ${umidadeOriginal}% | Desejada: ${umidadeDesejada}%<br><br><strong>Óleo Corrigido: ${resultadoArredondado}%</strong>`;
+            divResultado.innerHTML = `
+                <div style="line-height: 1.6;">
+                    <div> <strong>Nova Umidade:</strong> ${umidadeDesejada}%</div>
+                    <div> <strong>Óleo Projetado:</strong> ${oleoCorrigido.toFixed(2)}%</div>
+                    <div> <strong>Óleo Desejado:</strong> ${oleoDesejado.toFixed(2)}%</div>
+                    <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+                    <div> <strong>Diferença:</strong> 
+                        <span style="color: ${diferenca >= 0 ? '#27ae60' : '#c0392b'}; font-weight: bold;">
+                            ${diferenca > 0 ? '+' : ''}${diferenca.toFixed(2)}%
+                        </span>
+                    </div>
+                </div>
+            `;
         }
-
         const themeToggle = document.getElementById('theme-toggle');
         const savedTheme = localStorage.getItem('theme');
 
