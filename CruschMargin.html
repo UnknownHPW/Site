@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Crush Margin & Rendimento da Soja</title>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #09090b 0%, #18181b 100%);
+            --card-bg: #121216;
+            --card-border: #27272a;
+            --text-main: #f4f4f5;
+            --text-label: #a1a1aa;
+            --input-bg: #18181b;
+            --input-border: #27272a;
+            --input-text: #ffffff;
+            --btn-bg: #7c3aed;
+            --btn-hover: #6d28d9;
+            --result-bg: #18181b;
+            --switch-bg: #7c3aed; 
+            
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --table-hover: rgba(255, 255, 255, 0.03);
+        }
+
+        [data-theme="light"] {
+            --bg-gradient: linear-gradient(135deg, #f4f7f6 0%, #e2e8f0 100%);
+            --card-bg: white;
+            --card-border: #cbd5e1;
+            --text-main: #1e293b;
+            --text-label: #475569;
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --input-text: #000000;
+            --btn-bg: #2563eb;
+            --btn-hover: #1d4ed8;
+            --result-bg: #f8fafc;
+            --switch-bg: #0fbcf9; 
+
+            --success-color: #16a34a;
+            --danger-color: #dc2626;
+            --table-hover: rgba(0, 0, 0, 0.02);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-gradient); 
+            min-height: 100vh;
+            color: var(--text-main);
+            transition: background 0.3s ease, color 0.3s ease;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Header Header Area */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--btn-bg);
+            color: #fff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-label);
+        }
+
+        /* Toggle Switch UI */
+        .theme-switch-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 28px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--switch-bg);
+            transition: 0.4s;
+            border-radius: 28px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .slider:after {
+            content: "🌙";
+            position: absolute;
+            right: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            opacity: 1;
+            transition: 0.4s;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+
+        input:checked + .slider:after {
+            content: "☀️";
+            left: 7px;
+            right: auto;
+        }
+
+        /* Grid Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            width: 100%;
+        }
+
+        @media (min-width: 900px) {
+            .main-grid {
+                grid-template-columns: 420px 1fr;
+            }
+        }
+
+        /* Cards Style */
+        .card { 
+            background: var(--card-bg); 
+            padding: 24px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); 
+            border: 1px solid var(--card-border);
+            width: 100%; 
+            position: relative;
+            transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .card:last-child {
+            margin-bottom: 0;
+        }
+        
+        .card:hover {
+            border-color: rgba(124, 58, 237, 0.4);
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 8px;
+        }
+
+        .section-title i {
+            color: var(--btn-bg);
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        label { 
+            display: block; 
+            font-weight: 600; 
+            color: var(--text-label); 
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        
+        input[type="text"], input[type="number"], select { 
+            width: 100%; 
+            padding: 10px 12px; 
+            background: var(--input-bg);
+            border: 1px solid var(--input-border); 
+            border-radius: 6px; 
+            font-size: 14px;
+            color: var(--input-text);
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--btn-bg);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
+        }
+
+        /* Buttons */
+        button.calc-btn { 
+            background-color: var(--btn-bg); 
+            color: white; 
+            border: none; 
+            padding: 12px 16px; 
+            width: 100%; 
+            border-radius: 6px; 
+            margin-top: 10px; 
+            font-size: 15px; 
+            font-weight: 600;
+            cursor: pointer; 
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button.calc-btn:hover { 
+            background-color: var(--btn-hover);
+            transform: scale(1.01); 
+        }
+        
+        button.calc-btn:active {
+            transform: scale(0.99);
+        }
+
+        .btn-preset {
+            background: transparent;
+            border: 1px dashed var(--card-border);
+            color: var(--text-label);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-preset:hover {
+            border-color: var(--btn-bg);
+            color: var(--text-main);
+        }
+
+        /* Yield Alert Banner */
+        .yield-status {
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .yield-status.valid {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: var(--success-color);
+        }
+
+        .yield-status.invalid {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger-color);
+        }
+
+        /* KPI Dashboard Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: var(--result-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card.positive {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .kpi-card.negative {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-label);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.1;
+        }
+
+        .kpi-sub {
+            font-size: 12px;
+            color: var(--text-label);
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .badge-margin {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .badge-margin.pos {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success-color);
+        }
+
+        .badge-margin.neg {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+        }
+
+        /* Results Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: var(--result-bg);
+            color: var(--text-label);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--table-hover);
+        }
+
+        tfoot tr {
+            background: var(--result-bg);
+            font-weight: 700;
+        }
+
+        tfoot td {
+            border-top: 2px solid var(--card-border);
+        }
+
+        .dot-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 600px) {
+            .charts-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--result-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 14px;
+            height: 220px;
+            position: relative;
+        }
+
+        .chart-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-label);
+            margin-bottom: 8px;
+        }
+
+        footer {
+            margin-top: 32px;
+            font-size: 12px;
+            color: var(--text-label);
+            text-align: center;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-label);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-main);
+        }
+
+        #logo {
+            width: 100%;
+            max-width: 420px;
+            height: auto;
+            margin-bottom: 20px;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        #logo:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header>
+                <img src="Logotipo3.png" alt="Logotipo" id="logo">
+    </header>
+
+    <div class="container">
+        
+        <header class="app-header">
+            <div class="header-title-box">
+                <div class="header-icon">
+                    <i class="fa-solid fa-seedling"></i>
+                </div>
+                <div>
+                    <h1>Crush Margin <span style="font-weight: 300;">Soja</span></h1>
+                    <p class="subtitle">Calculadora de Rendimento e Valor Econômico do Processamento</p>
+                </div>
+            </div>
+
+            <div class="theme-switch-container">
+                <label class="theme-switch">
+                    <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </header>
+
+        <div class="main-grid">
+
+            <div class="left-column">
+
+                <button type="button" class="btn-preset" onclick="applyMarketPreset()">
+                    <i class="fa-solid fa-bolt"></i> Preencher com Valores de Mercado
+                </button>
+
+                <div class="card">
+                    <div class="section-title">
+                        <span>MENU 1 — PREÇOS DOS PRODUTOS</span>
+                        <i class="fa-solid fa-tags"></i>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priceOil">Óleo de Soja (R$/ton)</label>
+                        <input type="number" id="priceOil" step="10" min="0" value="5400" oninput="calculateAll()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priceMeal">Farelo de Soja (R$/ton)</label>
+                        <input type="number" id="priceMeal" step="10" min="0" value="1950" oninput="calculateAll()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priceHulls">Casca de Soja (R$/ton)</label>
+                        <input type="number" id="priceHulls" step="5" min="0" value="700" oninput="calculateAll()">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">
+                        <span>MENU 2 — RENDIMENTOS (%)</span>
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="yieldOil">Rendimento Óleo (%)</label>
+                        <input type="number" id="yieldOil" step="0.1" min="0" max="100" value="19.0" oninput="calculateAll()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="yieldMeal">Rendimento Farelo (%)</label>
+                        <input type="number" id="yieldMeal" step="0.1" min="0" max="100" value="76.0" oninput="calculateAll()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="yieldHulls">Rendimento Casca (%)</label>
+                        <input type="number" id="yieldHulls" step="0.1" min="0" max="100" value="5.0" oninput="calculateAll()">
+                    </div>
+
+                    <div id="yieldStatus" class="yield-status valid">
+                        <span id="yieldStatusText">Soma dos Rendimentos: 100.0%</span>
+                        <i id="yieldStatusIcon" class="fa-solid fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">
+                        <span>MENU 3 — CUSTOS & PARÂMETROS</span>
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="costSoybeanTon">Custo da Soja Grão (R$/ton)</label>
+                        <input type="number" id="costSoybeanTon" step="10" min="0" value="2150" oninput="calculateAll()">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bagWeight">Peso do Saco (kg)</label>
+                        <input type="number" id="bagWeight" step="1" min="1" value="60" oninput="calculateAll()">
+                    </div>
+
+                    <button type="button" class="calc-btn" onclick="calculateAll()">
+                        <i class="fa-solid fa-rotate"></i> Recalcular Resultados
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="right-column">
+
+                <div class="kpi-grid">
+                    <div id="kpiCardTon" class="kpi-card positive">
+                        <div class="kpi-label">Crush Margin / Tonelada</div>
+                        <div id="kpiCrushTon" class="kpi-value">R$ 0,00</div>
+                        <div class="kpi-sub">
+                            <span>Margem/Custo:</span>
+                            <span id="kpiMarginPercent" class="badge-margin pos">0.00%</span>
+                        </div>
+                    </div>
+
+                    <div id="kpiCardBag" class="kpi-card positive">
+                        <div class="kpi-label">Crush Margin / Saco (<span id="lblBagWeightKpi">60</span>kg)</div>
+                        <div id="kpiCrushBag" class="kpi-value">R$ 0,00</div>
+                        <div class="kpi-sub">
+                            <span>Receita: <strong id="kpiRevenueBag">R$ 0,00</strong></span>
+                            <span>Custo: <strong id="kpiCostBag">R$ 0,00</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">
+                        <span>DEMONSTRATIVO DO SACO E TONELADA</span>
+                        <i class="fa-solid fa-table-list"></i>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th style="text-align: center;">Rendimento</th>
+                                    <th style="text-align: right;">Qtd / Saco</th>
+                                    <th style="text-align: right;">Preço (R$/ton)</th>
+                                    <th style="text-align: right;">Valor / Ton</th>
+                                    <th style="text-align: right;">Valor / Saco</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="dot-indicator" style="background: #f59e0b;"></span>Óleo de Soja</td>
+                                    <td id="tblYieldOil" style="text-align: center;">0,00%</td>
+                                    <td id="tblKgOil" style="text-align: right;">0,00 kg</td>
+                                    <td id="tblPriceOil" style="text-align: right;">R$ 0,00</td>
+                                    <td id="tblValTonOil" style="text-align: right; font-weight: 600;">R$ 0,00</td>
+                                    <td id="tblValBagOil" style="text-align: right; font-weight: 600; color: var(--success-color);">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="dot-indicator" style="background: #10b981;"></span>Farelo de Soja</td>
+                                    <td id="tblYieldMeal" style="text-align: center;">0,00%</td>
+                                    <td id="tblKgMeal" style="text-align: right;">0,00 kg</td>
+                                    <td id="tblPriceMeal" style="text-align: right;">R$ 0,00</td>
+                                    <td id="tblValTonMeal" style="text-align: right; font-weight: 600;">R$ 0,00</td>
+                                    <td id="tblValBagMeal" style="text-align: right; font-weight: 600; color: var(--success-color);">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="dot-indicator" style="background: #3b82f6;"></span>Casca de Soja</td>
+                                    <td id="tblYieldHulls" style="text-align: center;">0,00%</td>
+                                    <td id="tblKgHulls" style="text-align: right;">0,00 kg</td>
+                                    <td id="tblPriceHulls" style="text-align: right;">R$ 0,00</td>
+                                    <td id="tblValTonHulls" style="text-align: right; font-weight: 600;">R$ 0,00</td>
+                                    <td id="tblValBagHulls" style="text-align: right; font-weight: 600; color: var(--success-color);">R$ 0,00</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>TOTAL BRUTO</td>
+                                    <td id="tblTotalYield" style="text-align: center;">100,00%</td>
+                                    <td id="tblTotalKg" style="text-align: right;">60,00 kg</td>
+                                    <td style="text-align: right; color: var(--text-label);">—</td>
+                                    <td id="tblTotalValTon" style="text-align: right;">R$ 0,00</td>
+                                    <td id="tblTotalValBag" style="text-align: right; color: var(--success-color);">R$ 0,00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-box">
+                        <div class="chart-title"><i class="fa-solid fa-pie-chart"></i> Composição da Receita</div>
+                        <div style="height: 170px; position: relative;">
+                            <canvas id="chartDonut"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title"><i class="fa-solid fa-chart-column"></i> Custo vs Receita (R$/ton)</div>
+                        <div style="height: 170px; position: relative;">
+                            <canvas id="chartBar"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <footer>
+            <a href="index.html" class="back-link">← Voltar ao Menu Principal</a>
+        </footer>
+    </div>
+
+    <script>
+        let chartDonutInstance = null;
+        let chartBarInstance = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            calculateAll();
+        });
+
+        function toggleTheme() {
+            const isChecked = document.getElementById('themeToggle').checked;
+            const html = document.documentElement;
+            if (isChecked) {
+                html.setAttribute('data-theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+            }
+            updateChartsTheme();
+        }
+
+        function applyMarketPreset() {
+            document.getElementById('priceOil').value = 5200;
+            document.getElementById('priceMeal').value = 1850;
+            document.getElementById('priceHulls').value = 650;
+
+            document.getElementById('yieldOil').value = 19.0;
+            document.getElementById('yieldMeal').value = 76.0;
+            document.getElementById('yieldHulls').value = 5.0;
+
+            document.getElementById('costSoybeanTon').value = 2100;
+            document.getElementById('bagWeight').value = 60;
+
+            calculateAll();
+        }
+
+        function formatBRL(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(isNaN(value) ? 0 : value);
+        }
+
+        function formatNum(value, decimals = 2) {
+            return new Intl.NumberFormat('pt-BR', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(isNaN(value) ? 0 : value);
+        }
+
+        function calculateAll() {
+            const priceOil = parseFloat(document.getElementById('priceOil').value) || 0;
+            const priceMeal = parseFloat(document.getElementById('priceMeal').value) || 0;
+            const priceHulls = parseFloat(document.getElementById('priceHulls').value) || 0;
+
+            const yieldOil = parseFloat(document.getElementById('yieldOil').value) || 0;
+            const yieldMeal = parseFloat(document.getElementById('yieldMeal').value) || 0;
+            const yieldHulls = parseFloat(document.getElementById('yieldHulls').value) || 0;
+
+            const costSoyTon = parseFloat(document.getElementById('costSoybeanTon').value) || 0;
+            const bagWeight = parseFloat(document.getElementById('bagWeight').value) || 60;
+
+            const yieldSum = +(yieldOil + yieldMeal + yieldHulls).toFixed(2);
+            updateYieldStatus(yieldSum);
+
+            const valTonOil = (yieldOil / 100) * priceOil;
+            const valTonMeal = (yieldMeal / 100) * priceMeal;
+            const valTonHulls = (yieldHulls / 100) * priceHulls;
+            const valTonTotal = valTonOil + valTonMeal + valTonHulls;
+
+            const kgBagOil = bagWeight * (yieldOil / 100);
+            const kgBagMeal = bagWeight * (yieldMeal / 100);
+            const kgBagHulls = bagWeight * (yieldHulls / 100);
+            const kgBagTotal = kgBagOil + kgBagMeal + kgBagHulls;
+
+            const valBagOil = (kgBagOil / 1000) * priceOil;
+            const valBagMeal = (kgBagMeal / 1000) * priceMeal;
+            const valBagHulls = (kgBagHulls / 1000) * priceHulls;
+            const valBagTotal = valBagOil + valBagMeal + valBagHulls;
+
+            const costSoyBag = costSoyTon * (bagWeight / 1000);
+            const crushMarginTon = valTonTotal - costSoyTon;
+            const crushMarginBag = valBagTotal - costSoyBag;
+            const marginPercent = costSoyTon > 0 ? (crushMarginTon / costSoyTon) * 100 : 0;
+
+            document.getElementById('lblBagWeightKpi').innerText = bagWeight;
+            document.getElementById('kpiCrushTon').innerText = formatBRL(crushMarginTon);
+            document.getElementById('kpiCrushBag').innerText = formatBRL(crushMarginBag);
+            document.getElementById('kpiRevenueBag').innerText = formatBRL(valBagTotal);
+            document.getElementById('kpiCostBag').innerText = formatBRL(costSoyBag);
+
+            const marginBadge = document.getElementById('kpiMarginPercent');
+            marginBadge.innerText = `${marginPercent >= 0 ? '+' : ''}${formatNum(marginPercent, 2)}%`;
+            
+            const cardTon = document.getElementById('kpiCardTon');
+            const cardBag = document.getElementById('kpiCardBag');
+
+            if (crushMarginTon >= 0) {
+                cardTon.className = "kpi-card positive";
+                cardBag.className = "kpi-card positive";
+                marginBadge.className = "badge-margin pos";
+            } else {
+                cardTon.className = "kpi-card negative";
+                cardBag.className = "kpi-card negative";
+                marginBadge.className = "badge-margin neg";
+            }
+
+            document.getElementById('tblYieldOil').innerText = `${formatNum(yieldOil)}%`;
+            document.getElementById('tblKgOil').innerText = `${formatNum(kgBagOil)} kg`;
+            document.getElementById('tblPriceOil').innerText = formatBRL(priceOil);
+            document.getElementById('tblValTonOil').innerText = formatBRL(valTonOil);
+            document.getElementById('tblValBagOil').innerText = formatBRL(valBagOil);
+
+            document.getElementById('tblYieldMeal').innerText = `${formatNum(yieldMeal)}%`;
+            document.getElementById('tblKgMeal').innerText = `${formatNum(kgBagMeal)} kg`;
+            document.getElementById('tblPriceMeal').innerText = formatBRL(priceMeal);
+            document.getElementById('tblValTonMeal').innerText = formatBRL(valTonMeal);
+            document.getElementById('tblValBagMeal').innerText = formatBRL(valBagMeal);
+
+            document.getElementById('tblYieldHulls').innerText = `${formatNum(yieldHulls)}%`;
+            document.getElementById('tblKgHulls').innerText = `${formatNum(kgBagHulls)} kg`;
+            document.getElementById('tblPriceHulls').innerText = formatBRL(priceHulls);
+            document.getElementById('tblValTonHulls').innerText = formatBRL(valTonHulls);
+            document.getElementById('tblValBagHulls').innerText = formatBRL(valBagHulls);
+
+            document.getElementById('tblTotalYield').innerText = `${formatNum(yieldSum)}%`;
+            document.getElementById('tblTotalKg').innerText = `${formatNum(kgBagTotal)} kg`;
+            document.getElementById('tblTotalValTon').innerText = formatBRL(valTonTotal);
+            document.getElementById('tblTotalValBag').innerText = formatBRL(valBagTotal);
+
+            updateChartsData(valTonOil, valTonMeal, valTonHulls, costSoyTon, valTonTotal, crushMarginTon);
+        }
+
+        function updateYieldStatus(sum) {
+            const statusEl = document.getElementById('yieldStatus');
+            const textEl = document.getElementById('yieldStatusText');
+            const iconEl = document.getElementById('yieldStatusIcon');
+
+            if (Math.abs(sum - 100) < 0.01) {
+                statusEl.className = 'yield-status valid';
+                textEl.innerText = `Soma dos Rendimentos: 100.0% (Ok)`;
+                iconEl.className = 'fa-solid fa-check-circle';
+            } else {
+                statusEl.className = 'yield-status invalid';
+                textEl.innerText = `Soma dos Rendimentos: ${sum.toFixed(1)}% (Ajuste para 100%)`;
+                iconEl.className = 'fa-solid fa-triangle-exclamation';
+            }
+        }
+
+        function initCharts() {
+            const ctxDonut = document.getElementById('chartDonut').getContext('2d');
+            const ctxBar = document.getElementById('chartBar').getContext('2d');
+
+            chartDonutInstance = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Óleo', 'Farelo', 'Casca'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#f59e0b', '#10b981', '#3b82f6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 10 }, boxWidth: 10, padding: 8 }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            chartBarInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Custo', 'Receita', 'Crush'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#ef4444', '#10b981', '#7c3aed'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 9 } }
+                        },
+                        x: { ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            updateChartsTheme();
+        }
+
+        function updateChartsData(valOil, valMeal, valHulls, costTon, revTon, crushTon) {
+            if (!chartDonutInstance || !chartBarInstance) return;
+
+            chartDonutInstance.data.datasets[0].data = [+valOil.toFixed(2), +valMeal.toFixed(2), +valHulls.toFixed(2)];
+            chartDonutInstance.update();
+
+            const crushColor = crushTon >= 0 ? '#10b981' : '#ef4444';
+            chartBarInstance.data.datasets[0].data = [+costTon.toFixed(2), +revTon.toFixed(2), +crushTon.toFixed(2)];
+            chartBarInstance.data.datasets[0].backgroundColor[2] = crushColor;
+            chartBarInstance.update();
+        }
+
+        function updateChartsTheme() {
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            const textColor = isLight ? '#475569' : '#a1a1aa';
+
+            if (chartDonutInstance) {
+                chartDonutInstance.options.plugins.legend.labels.color = textColor;
+                chartDonutInstance.update();
+            }
+
+            if (chartBarInstance) {
+                chartBarInstance.options.scales.x.ticks.color = textColor;
+                chartBarInstance.options.scales.y.ticks.color = textColor;
+                chartBarInstance.update();
+            }
+        }
+    </script>
+</body>
+</html>
