@@ -626,8 +626,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="costSoybeanTon">Custo da Soja Grão (R$/ton)</label>
-                        <input type="number" id="costSoybeanTon" step="10" min="0" value="2150" oninput="calculateAll()">
+                        <label for="costSoy">Custo da Soja Grão (R$/saco)</label>
+                        <input type="number" id="costSoy" step="10" min="0" value="150" oninput="calculateAll()">
                     </div>
 
                     <div class="form-group">
@@ -775,7 +775,7 @@
             document.getElementById('yieldMeal').value = 76.0;
             document.getElementById('yieldHulls').value = 5.0;
 
-            document.getElementById('costSoybeanTon').value = 2100;
+            document.getElementById('costSoy').value = 150;
             document.getElementById('bagWeight').value = 60;
 
             calculateAll();
@@ -806,7 +806,8 @@
             const yieldMeal = parseFloat(document.getElementById('yieldMeal').value) || 0;
             const yieldHulls = parseFloat(document.getElementById('yieldHulls').value) || 0;
 
-            const costSoyTon = parseFloat(document.getElementById('costSoybeanTon').value) || 0;
+            const costSoy = parseFloat(document.getElementById('costSoy').value) || 0;
+            const costSoyTon = costSoy * 16.67;
             const bagWeight = parseFloat(document.getElementById('bagWeight').value) || 60;
 
             const yieldSum = +(yieldOil + yieldMeal + yieldHulls).toFixed(2);
