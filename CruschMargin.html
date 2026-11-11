@@ -590,6 +590,11 @@
                         <label for="priceHulls">Casca de Soja (R$/ton)</label>
                         <input type="number" id="priceHulls" step="5" min="0" value="700" oninput="calculateAll()">
                     </div>
+
+                    <div class="form-group">
+                        <label for="priceSmashperTon">Custo de esmagamento (R$/ton)</label>
+                        <input type="number" id="priceSmashperTon" step="10" min="0" value="200" oninput="calculateAll()">
+                    </div>
                 </div>
 
                 <div class="card">
@@ -770,6 +775,7 @@
             document.getElementById('priceOil').value = 5200;
             document.getElementById('priceMeal').value = 1850;
             document.getElementById('priceHulls').value = 650;
+            document.getElementById('priceSmashperTon').value = 200;
 
             document.getElementById('yieldOil').value = 19.0;
             document.getElementById('yieldMeal').value = 76.0;
@@ -801,14 +807,19 @@
             const priceOil = parseFloat(document.getElementById('priceOil').value) || 0;
             const priceMeal = parseFloat(document.getElementById('priceMeal').value) || 0;
             const priceHulls = parseFloat(document.getElementById('priceHulls').value) || 0;
+            const priceSmashperTon = parseFloat(document.getElementById('priceSmashperTon').value) || 0;
 
             const yieldOil = parseFloat(document.getElementById('yieldOil').value) || 0;
             const yieldMeal = parseFloat(document.getElementById('yieldMeal').value) || 0;
             const yieldHulls = parseFloat(document.getElementById('yieldHulls').value) || 0;
 
             const costSoy = parseFloat(document.getElementById('costSoy').value) || 0;
-            const costSoyTon = costSoy * 16.67;
             const bagWeight = parseFloat(document.getElementById('bagWeight').value) || 60;
+
+            if (bagWeight <= 0) {
+                console.error('O peso do saco precisa ser maior que zero.');
+                return;
+            }
 
             const yieldSum = +(yieldOil + yieldMeal + yieldHulls).toFixed(2);
             updateYieldStatus(yieldSum);
@@ -816,32 +827,55 @@
             const valTonOil = (yieldOil / 100) * priceOil;
             const valTonMeal = (yieldMeal / 100) * priceMeal;
             const valTonHulls = (yieldHulls / 100) * priceHulls;
+
             const valTonTotal = valTonOil + valTonMeal + valTonHulls;
 
             const kgBagOil = bagWeight * (yieldOil / 100);
             const kgBagMeal = bagWeight * (yieldMeal / 100);
             const kgBagHulls = bagWeight * (yieldHulls / 100);
+
             const kgBagTotal = kgBagOil + kgBagMeal + kgBagHulls;
 
             const valBagOil = (kgBagOil / 1000) * priceOil;
             const valBagMeal = (kgBagMeal / 1000) * priceMeal;
             const valBagHulls = (kgBagHulls / 1000) * priceHulls;
+
             const valBagTotal = valBagOil + valBagMeal + valBagHulls;
 
-            const costSoyBag = costSoyTon * (bagWeight / 1000);
-            const crushMarginTon = valTonTotal - costSoyTon;
-            const crushMarginBag = valBagTotal - costSoyBag;
-            const marginPercent = costSoyTon > 0 ? (crushMarginTon / costSoyTon) * 100 : 0;
+            const costSoyBag = costSoy;
+            const costSoyTon = costSoyBag * (1000 / bagWeight);
+
+            const smashCostPerBag = priceSmashperTon * (bagWeight / 1000);
+
+            const totalCostTon = costSoyTon + priceSmashperTon;
+            const totalCostBag = costSoyBag + smashCostPerBag;
+
+            const crushMarginTon = valTonTotal - totalCostTon;
+            const crushMarginBag = valBagTotal - totalCostBag;
+
+            const marginPercent = totalCostTon > 0
+                ? (crushMarginTon / totalCostTon) * 100
+                : 0;
 
             document.getElementById('lblBagWeightKpi').innerText = bagWeight;
-            document.getElementById('kpiCrushTon').innerText = formatBRL(crushMarginTon);
-            document.getElementById('kpiCrushBag').innerText = formatBRL(crushMarginBag);
-            document.getElementById('kpiRevenueBag').innerText = formatBRL(valBagTotal);
-            document.getElementById('kpiCostBag').innerText = formatBRL(costSoyBag);
+
+            document.getElementById('kpiCrushTon').innerText =
+                formatBRL(crushMarginTon);
+
+            document.getElementById('kpiCrushBag').innerText =
+                formatBRL(crushMarginBag);
+
+            document.getElementById('kpiRevenueBag').innerText =
+                formatBRL(valBagTotal);
+
+            document.getElementById('kpiCostBag').innerText =
+                formatBRL(totalCostBag);
 
             const marginBadge = document.getElementById('kpiMarginPercent');
-            marginBadge.innerText = `${marginPercent >= 0 ? '+' : ''}${formatNum(marginPercent, 2)}%`;
-            
+
+            marginBadge.innerText =
+                `${marginPercent >= 0 ? '+' : ''}${formatNum(marginPercent, 2)}%`;
+
             const cardTon = document.getElementById('kpiCardTon');
             const cardBag = document.getElementById('kpiCardBag');
 
@@ -855,30 +889,71 @@
                 marginBadge.className = "badge-margin neg";
             }
 
-            document.getElementById('tblYieldOil').innerText = `${formatNum(yieldOil)}%`;
-            document.getElementById('tblKgOil').innerText = `${formatNum(kgBagOil)} kg`;
-            document.getElementById('tblPriceOil').innerText = formatBRL(priceOil);
-            document.getElementById('tblValTonOil').innerText = formatBRL(valTonOil);
-            document.getElementById('tblValBagOil').innerText = formatBRL(valBagOil);
+            document.getElementById('tblYieldOil').innerText =
+                `${formatNum(yieldOil)}%`;
 
-            document.getElementById('tblYieldMeal').innerText = `${formatNum(yieldMeal)}%`;
-            document.getElementById('tblKgMeal').innerText = `${formatNum(kgBagMeal)} kg`;
-            document.getElementById('tblPriceMeal').innerText = formatBRL(priceMeal);
-            document.getElementById('tblValTonMeal').innerText = formatBRL(valTonMeal);
-            document.getElementById('tblValBagMeal').innerText = formatBRL(valBagMeal);
+            document.getElementById('tblKgOil').innerText =
+                `${formatNum(kgBagOil)} kg`;
 
-            document.getElementById('tblYieldHulls').innerText = `${formatNum(yieldHulls)}%`;
-            document.getElementById('tblKgHulls').innerText = `${formatNum(kgBagHulls)} kg`;
-            document.getElementById('tblPriceHulls').innerText = formatBRL(priceHulls);
-            document.getElementById('tblValTonHulls').innerText = formatBRL(valTonHulls);
-            document.getElementById('tblValBagHulls').innerText = formatBRL(valBagHulls);
+            document.getElementById('tblPriceOil').innerText =
+                formatBRL(priceOil);
 
-            document.getElementById('tblTotalYield').innerText = `${formatNum(yieldSum)}%`;
-            document.getElementById('tblTotalKg').innerText = `${formatNum(kgBagTotal)} kg`;
-            document.getElementById('tblTotalValTon').innerText = formatBRL(valTonTotal);
-            document.getElementById('tblTotalValBag').innerText = formatBRL(valBagTotal);
+            document.getElementById('tblValTonOil').innerText =
+                formatBRL(valTonOil);
 
-            updateChartsData(valTonOil, valTonMeal, valTonHulls, costSoyTon, valTonTotal, crushMarginTon);
+            document.getElementById('tblValBagOil').innerText =
+                formatBRL(valBagOil);
+
+            document.getElementById('tblYieldMeal').innerText =
+                `${formatNum(yieldMeal)}%`;
+
+            document.getElementById('tblKgMeal').innerText =
+                `${formatNum(kgBagMeal)} kg`;
+
+            document.getElementById('tblPriceMeal').innerText =
+                formatBRL(priceMeal);
+
+            document.getElementById('tblValTonMeal').innerText =
+                formatBRL(valTonMeal);
+
+            document.getElementById('tblValBagMeal').innerText =
+                formatBRL(valBagMeal);
+
+            document.getElementById('tblYieldHulls').innerText =
+                `${formatNum(yieldHulls)}%`;
+
+            document.getElementById('tblKgHulls').innerText =
+                `${formatNum(kgBagHulls)} kg`;
+
+            document.getElementById('tblPriceHulls').innerText =
+                formatBRL(priceHulls);
+
+            document.getElementById('tblValTonHulls').innerText =
+                formatBRL(valTonHulls);
+
+            document.getElementById('tblValBagHulls').innerText =
+                formatBRL(valBagHulls);
+
+            document.getElementById('tblTotalYield').innerText =
+                `${formatNum(yieldSum)}%`;
+
+            document.getElementById('tblTotalKg').innerText =
+                `${formatNum(kgBagTotal)} kg`;
+
+            document.getElementById('tblTotalValTon').innerText =
+                formatBRL(valTonTotal);
+
+            document.getElementById('tblTotalValBag').innerText =
+                formatBRL(valBagTotal);
+
+            updateChartsData(
+                valTonOil,
+                valTonMeal,
+                valTonHulls,
+                totalCostTon,
+                valTonTotal,
+                crushMarginTon
+            );
         }
 
         function updateYieldStatus(sum) {
