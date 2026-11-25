@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Lançamento</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #09090b 0%, #18181b 100%);
+            --card-bg: #121216;
+            --card-border: #27272a;
+            --text-main: #f4f4f5;
+            --text-label: #a1a1aa;
+            --input-bg: #18181b;
+            --input-border: #27272a;
+            --input-text: #ffffff;
+            --btn-bg: #7c3aed;
+            --btn-hover: #6d28d9;
+            --result-bg: #18181b;
+            --switch-bg: #7c3aed; 
+        }
+
+        [data-theme="light"] {
+            --bg-gradient: linear-gradient(135deg, #f4f7f6 0%, #e2e8f0 100%);
+            --card-bg: white;
+            --card-border: #cbd5e1;
+            --text-main: #1e293b;
+            --text-label: #475569;
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --input-text: #000000;
+            --btn-bg: #2563eb;
+            --btn-hover: #1d4ed8;
+            --result-bg: #f8fafc;
+            --switch-bg: #0fbcf9; 
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-gradient); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            transition: background 0.3s ease, color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        #logo {
+            width: 100%;
+            max-width: 420px;
+            height: auto;
+            margin-bottom: 20px;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        .card { 
+            background: var(--card-bg); 
+            padding: 35px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15); 
+            border: 1px solid var(--card-border);
+            width: 100%; 
+            box-sizing: border-box;
+            position: relative;
+            transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .theme-switch-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 28px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--switch-bg);
+            transition: 0.4s;
+            border-radius: 28px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .slider:after {
+            content: "🌙";
+            position: absolute;
+            right: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            opacity: 1;
+            transition: 0.4s;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+
+        input:checked + .slider:after {
+            content: "☀️";
+            left: 7px;
+            right: auto;
+        }
+
+        h2 { 
+            color: var(--text-main); 
+            text-align: center; 
+            margin-top: 10px;
+            font-size: 24px;
+        }
+        
+        label { 
+            display: block; 
+            margin-top: 15px; 
+            font-weight: 600; 
+            color: var(--text-label); 
+            font-size: 14px;
+        }
+        
+        input[type="text"], input[type="number"] { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 6px; 
+            background: var(--input-bg);
+            border: 1px solid var(--input-border); 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 15px;
+            color: var(--input-text);
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+        }
+        
+        button.Lancar-Btn { 
+            background-color: var(--btn-bg); 
+            color: white; 
+            border: none; 
+            padding: 14px; 
+            width: 100%; 
+            border-radius: 6px; 
+            margin-top: 24px; 
+            font-size: 16px; 
+            font-weight: 600;
+            cursor: pointer; 
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        button.Lancar-Btn:hover:not(:disabled) { 
+            background-color: var(--btn-hover);
+            transform: scale(1.02); 
+        }
+        
+        button.Lancar-Btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        button.Lancar-Btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            padding: 14px;
+            background: var(--result-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            display: none;
+            color: var(--text-main);
+            animation: fadeIn 0.35s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-label);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-main);
+        }
+
+        #logo:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="theme-switch-container">
+        <label class="theme-switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="wrapper">
+        <img src="Logotipo3.png" alt="Logotipo" id="logo">
+
+        <div class="card">
+            <h2>Cadastro de Lançamento</h2>
+            
+            <label for="produto">Produto:</label>
+            <input type="text" id="produto" placeholder="Nome do produto">
+
+            <label for="Setor">Setor:</label>
+            <input type="text" id="Setor" placeholder="CC ou AI">
+
+            <label for="Quantidade">Quantidade:</label>
+            <input type="number" id="Quantidade" placeholder="0.0" step="0.1">
+
+            <button type="button" class="Lancar-Btn" id="btnLancar" onclick="MandarPlanilha()">Lançar</button>
+
+            <div id="resultado" role="status" aria-live="polite"></div>
+
+            <a href="index.html" class="back-link">← Voltar ao Menu Principal</a>
+        </div>
+    </div>
+
+    <script>
+        const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbwJHK_4ibUBsD1cX_M8QsQEtWoyUIg7z2f8hjuN3ldVgopNfpQg9pjRFli3tDDvyENogg/exec";
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+
+        themeToggle.addEventListener('change', () => {
+            htmlElement.setAttribute('data-theme', themeToggle.checked ? 'light' : 'dark');
+        });
+
+        async function MandarPlanilha() {
+            const produtoInput = document.getElementById('produto');
+            const setorInput = document.getElementById('Setor');
+            const quantidadeInput = document.getElementById('Quantidade');
+            const btn = document.getElementById('btnLancar');
+
+            const produto = produtoInput.value.trim();
+            const setor = setorInput.value.trim().toUpperCase();
+            const quantidadeNum = parseFloat(quantidadeInput.value);
+
+            if (!produto || !setor || Number.isNaN(quantidadeNum)) {
+                mostrarMensagem("Preencha todos os campos corretamente antes de lançar!", "#ef4444");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Enviando...";
+
+            const payload = {
+                produto: produto,
+                setor: setor,
+                quantidade: quantidadeNum
+            };
+
+            try {
+                await fetch(URL_PLANILHA, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                mostrarMensagem("Lançamento registrado com sucesso!", "#10b981");
+
+                produtoInput.value = "";
+                setorInput.value = "";
+                quantidadeInput.value = "";
+                produtoInput.focus();
+            } catch (error) {
+                console.error("Erro:", error);
+                mostrarMensagem("Erro ao conectar com a planilha.", "#ef4444");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Lançar";
+            }
+        }
+
+        let timeoutMensagem;
+        function mostrarMensagem(texto, corBorda) {
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.innerText = texto;
+            resultadoDiv.style.borderColor = corBorda;
+            resultadoDiv.style.display = "block";
+
+            clearTimeout(timeoutMensagem);
+            timeoutMensagem = setTimeout(() => {
+                resultadoDiv.style.display = "none";
+            }, 4000);
+        }
+    </script>
+
+</body>
+</html>
