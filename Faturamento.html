@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Lançamento</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #09090b 0%, #18181b 100%);
+            --card-bg: #121216;
+            --card-border: #27272a;
+            --text-main: #f4f4f5;
+            --text-label: #a1a1aa;
+            --input-bg: #18181b;
+            --input-border: #27272a;
+            --input-text: #ffffff;
+            --btn-bg: #7c3aed;
+            --btn-hover: #6d28d9;
+            --result-bg: #18181b;
+            --switch-bg: #7c3aed;
+            --dropdown-hover: #27272a;
+        }
+
+        [data-theme="light"] {
+            --bg-gradient: linear-gradient(135deg, #f4f7f6 0%, #e2e8f0 100%);
+            --card-bg: white;
+            --card-border: #cbd5e1;
+            --text-main: #1e293b;
+            --text-label: #475569;
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --input-text: #000000;
+            --btn-bg: #2563eb;
+            --btn-hover: #1d4ed8;
+            --result-bg: #f8fafc;
+            --switch-bg: #0fbcf9;
+            --dropdown-hover: #f1f5f9;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-gradient); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            transition: background 0.3s ease, color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        #logo {
+            width: 100%;
+            max-width: 420px;
+            height: auto;
+            margin-bottom: 20px;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        .card { 
+            background: var(--card-bg); 
+            padding: 35px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15); 
+            border: 1px solid var(--card-border);
+            width: 100%; 
+            box-sizing: border-box;
+            position: relative;
+            transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .theme-switch-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 28px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--switch-bg);
+            transition: 0.4s;
+            border-radius: 28px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .slider:after {
+            content: "🌙";
+            position: absolute;
+            right: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            opacity: 1;
+            transition: 0.4s;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+
+        input:checked + .slider:after {
+            content: "☀️";
+            left: 7px;
+            right: auto;
+        }
+
+        h2 { 
+            color: var(--text-main); 
+            text-align: center; 
+            margin-top: 10px;
+            font-size: 24px;
+        }
+        
+        label { 
+            display: block; 
+            margin-top: 15px; 
+            font-weight: 600; 
+            color: var(--text-label); 
+            font-size: 14px;
+        }
+
+        /* Container relativo para posicionar o Pop-up de resultados */
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+        
+        input[type="text"], input[type="number"], input[type="search"] { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 6px; 
+            background: var(--input-bg);
+            border: 1px solid var(--input-border); 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 15px;
+            color: var(--input-text);
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+        }
+
+        /* Estilo do Pop-up (Dropdown) de NFs */
+        .dropdown-list {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            display: none;
+            list-style: none;
+            margin: 0;
+            padding: 4px 0;
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        .dropdown-list.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.15s;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--dropdown-hover);
+        }
+
+        .dropdown-item span.badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(124, 58, 237, 0.2);
+            color: #a78bfa;
+        }
+
+        [data-theme="light"] .dropdown-item span.badge {
+            background: rgba(37, 99, 235, 0.15);
+            color: #2563eb;
+        }
+
+        .dropdown-empty {
+            padding: 12px 14px;
+            font-size: 13px;
+            color: var(--text-label);
+            text-align: center;
+        }
+        
+        button.Lancar-Btn { 
+            background-color: var(--btn-bg); 
+            color: white; 
+            border: none; 
+            padding: 14px; 
+            width: 100%; 
+            border-radius: 6px; 
+            margin-top: 24px; 
+            font-size: 16px; 
+            font-weight: 600;
+            cursor: pointer; 
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        button.Lancar-Btn:hover:not(:disabled) { 
+            background-color: var(--btn-hover);
+            transform: scale(1.02); 
+        }
+        
+        button.Lancar-Btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        button.Lancar-Btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            padding: 14px;
+            background: var(--result-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            display: none;
+            color: var(--text-main);
+            animation: fadeIn 0.35s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-label);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-main);
+        }
+
+        #logo:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="theme-switch-container">
+        <label class="theme-switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="wrapper">
+        <img src="Logotipo3.png" alt="Logotipo" id="logo">
+
+        <div class="card">
+            <h2>Lançamento de Notas</h2>
+
+            <label for="NF">Nota Fiscal:</label>
+            <div class="search-container">
+                <input type="search" id="NF" placeholder="Carregando NFs..." autocomplete="off">
+                <ul class="dropdown-list" id="nf-dropdown"></ul>
+            </div>
+
+            <button type="button" class="Lancar-Btn" id="btnLancar" onclick="MandarPlanilha()">Lançado</button>
+
+            <div id="resultado" role="status" aria-live="polite"></div>
+
+            <a href="https://docs.google.com/spreadsheets/d/1gBz6zC0uv9vhcZUP2xOFLng_bejidGDdv-W5mW9SSlY/edit?usp=sharing" class="back-link" target="_blank" rel="noopener noreferrer">Abrir Planilha</a>
+            <a href="LancamentoDeNotas.html" class="back-link">← Voltar</a>
+        </div>
+    </div>
+
+    <script>
+        const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbysrZXLabqkQpdPng97Gtsloac3rcvD-l6eeUxlunmp8EQtNm7TCgWNxDWHZcfTopmghw/exec";
+
+        let nfsCadastradas = [];
+        let nfSelecionadaObj = null;
+        let carregandoDados = true;
+
+        const inputNF = document.getElementById('NF');
+        const dropdown = document.getElementById('nf-dropdown');
+        const resultadoDiv = document.getElementById('resultado');
+        const btnLancar = document.getElementById('btnLancar');
+
+        async function carregarNFsDaPlanilha() {
+            carregandoDados = true;
+            inputNF.placeholder = "Carregando NFs da planilha...";
+
+            try {
+                const resposta = await fetch(URL_PLANILHA, {
+                    method: "GET",
+                    redirect: "follow"
+                });
+                const json = await resposta.json();
+
+                if (!json.success) {
+                    throw new Error(json.message);
+                }
+
+                nfsCadastradas = json.data || [];
+                inputNF.placeholder = nfsCadastradas.length > 0
+                    ? "Pesquisar ou selecionar NF..."
+                    : "Nenhuma NF pendente no momento";
+            } catch (erro) {
+                console.error("Erro ao carregar NFs:", erro);
+                inputNF.placeholder = "Erro ao carregar NFs";
+                mostrarMensagem(`Erro ao conectar com a planilha: ${erro.message}`, "#ef4444");
+            } finally {
+                carregandoDados = false;
+                if (document.activeElement === inputNF) {
+                    renderizarDropdown(inputNF.value);
+                }
+            }
+        }
+
+        function renderizarDropdown(filtro = "") {
+            dropdown.innerHTML = "";
+
+            if (carregandoDados) {
+                dropdown.innerHTML = `<li class="dropdown-empty">Buscando notas na planilha...</li>`;
+                dropdown.classList.add('active');
+                return;
+            }
+
+            const termo = filtro.replace(/^nf\s*/i, "").toLowerCase().trim();
+
+            const filtradas = nfsCadastradas.filter(nf =>
+                nf.numero.toLowerCase().includes(termo)
+            );
+
+            if (filtradas.length === 0) {
+                dropdown.innerHTML = `<li class="dropdown-empty">Nenhuma NF pendente encontrada</li>`;
+            } else {
+                filtradas.forEach(nf => {
+                    const li = document.createElement('li');
+                    li.className = 'dropdown-item';
+                    li.innerHTML = `
+                        <span><strong>NF ${nf.numero}</strong></span>
+                        <span class="badge">${nf.resumo}</span>
+                    `;
+                    li.addEventListener('click', () => {
+                        inputNF.value = nf.numero;
+                        nfSelecionadaObj = nf;
+                        dropdown.classList.remove('active');
+                    });
+                    dropdown.appendChild(li);
+                });
+            }
+            dropdown.classList.add('active');
+        }
+
+        inputNF.addEventListener('focus', () => {
+            renderizarDropdown(inputNF.value);
+        });
+
+        inputNF.addEventListener('input', () => {
+            nfSelecionadaObj = null;
+            renderizarDropdown(inputNF.value);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('change', () => {
+            const theme = themeToggle.checked ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        });
+
+        let timeoutMensagem;
+        function mostrarMensagem(texto, corBorda) {
+            resultadoDiv.textContent = texto;
+            resultadoDiv.style.borderColor = corBorda;
+            resultadoDiv.style.display = "block";
+
+            clearTimeout(timeoutMensagem);
+            timeoutMensagem = setTimeout(() => {
+                resultadoDiv.style.display = "none";
+            }, 5000);
+        }
+
+        async function MandarPlanilha() {
+            const valorDigitado = inputNF.value.replace(/^nf\s*/i, "").trim();
+
+            if (!valorDigitado) {
+                mostrarMensagem("Por favor, digite ou selecione uma Nota Fiscal.", "#ef4444");
+                inputNF.focus();
+                return;
+            }
+
+            const nfAlvo = nfSelecionadaObj || nfsCadastradas.find(
+                nf => nf.numero.toLowerCase() === valorDigitado.toLowerCase()
+            );
+
+            if (!nfAlvo) {
+                mostrarMensagem(`A NF ${valorDigitado} não está pendente ou já foi lançada.`, "#ef4444");
+                return;
+            }
+
+            btnLancar.disabled = true;
+            btnLancar.textContent = "Lançando...";
+
+            try {
+                const resposta = await fetch(URL_PLANILHA, {
+                    method: "POST",
+                    redirect: "follow",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify({
+                        acao: "lancar",
+                        numero: nfAlvo.numero,
+                        linhaCabecalho: nfAlvo.linhaCabecalho
+                    })
+                });
+
+                const json = await resposta.json();
+
+                if (!json.success) {
+                    throw new Error(json.message);
+                }
+
+                nfsCadastradas = nfsCadastradas.filter(
+                    nf => nf.linhaCabecalho !== nfAlvo.linhaCabecalho
+                );
+
+                inputNF.value = "";
+                nfSelecionadaObj = null;
+                inputNF.placeholder = nfsCadastradas.length > 0
+                    ? "Pesquisar ou selecionar NF..."
+                    : "Nenhuma NF pendente no momento";
+
+                mostrarMensagem(json.message, "#10b981");
+            } catch (erro) {
+                mostrarMensagem(`Erro ao lançar: ${erro.message}`, "#ef4444");
+            } finally {
+                btnLancar.disabled = false;
+                btnLancar.textContent = "Lançado";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarNFsDaPlanilha);
+    </script>
+
+</body>
+</html>
